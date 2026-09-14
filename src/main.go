@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -9,11 +8,15 @@ import (
 
 var templ *template.Template
 
+type Set struct {
+	Weight    int
+	Reps      int
+	Completed bool
+}
+
 type Exercise struct {
-	Lift   string
-	Weight int
-	Reps   int
-	Sets   int
+	Lift string
+	Sets []Set
 }
 
 var Exercises []Exercise
@@ -48,21 +51,34 @@ func newHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Could not render page", http.StatusInternalServerError)
 		}
 	} else if r.Method == "POST" {
-		var exercise Exercise
-		exercise.Lift = r.PostFormValue("lift")
-		exercise.Weight, _ = strconv.Atoi(r.PostFormValue("weight"))
-		exercise.Reps, _ = strconv.Atoi(r.PostFormValue("reps"))
-		exercise.Sets, _ = strconv.Atoi(r.PostFormValue("sets"))
+		lift := r.PostFormValue("lift")
+		weight, _ := strconv.Atoi(r.PostFormValue("weight"))
+		reps, _ := strconv.Atoi(r.PostFormValue("reps"))
+		setCount, _ := strconv.Atoi(r.PostFormValue("sets"))
+
+		exercise := Exercise{Lift: lift}
+		for i := 0; i < setCount; i++ {
+			exercise.Sets = append(exercise.Sets, Set{
+				Weight:    weight,
+				Reps:      reps,
+				Completed: false,
+			})
+		}
 		Exercises = append(Exercises, exercise)
 		http.Redirect(w, r, "/workout-new", http.StatusSeeOther)
-		fmt.Println(Exercises)
 	}
 }
 
 func activeHandler(w http.ResponseWriter, r *http.Request) {
-	err := templ.ExecuteTemplate(w, "workout-active.html", nil)
-	if err != nil {
-		http.Error(w, "Could not render page", http.StatusInternalServerError)
+	if r.Method == "GET" {
+		err := templ.ExecuteTemplate(w, "workout-active.html", Exercises)
+		if err != nil {
+			http.Error(w, "Could not render page", http.StatusInternalServerError)
+		}
+	} else if r.Method == "POST" {
+		// TODO add write to db
+		Exercises = nil
+		http.Redirect(w, r, "/workout-log", http.StatusSeeOther)
 	}
 }
 

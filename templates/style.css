@@ -27,9 +27,15 @@ nav ul {
 nav li + li::before {
     content: "|";
     padding: 0 10px;
-    color: #888;
+    color: #888888;
 }
 
 body {
     padding: .2em;
+}
+
+ul li a {
+    list-style: none;
+    color: #888888;
+    text-decoration: none;
 }

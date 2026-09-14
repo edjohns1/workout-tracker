@@ -1,13 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Active Workout</title>
-  <link href="/style.css" rel="stylesheet" />
-</head>
-<body>
-  {{template "navbar" .}}
-  <h1>Active Workout</h1>
-</body>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Active Workout</title>
+    <link href="/style.css" rel="stylesheet" />
+  </head>
+  <body>
+    {{template "navbar" .}}
+    <h1>Active Workout</h1>
+
+    <ul>
+      {{range .}}
+      <li>
+        {{.Lift}}
+        <ul>
+          {{range .Sets}}
+          <li>{{.Weight}} weight × {{.Reps}} reps</li>
+          {{end}}
+        </ul>
+      </li>
+      {{else}}
+      <li>No exercises yet. <a href="/workout-new">Add some</a>.</li>
+      {{end}}
+    </ul>
+
+    {{if .}}
+    <form action="/workout-active" method="post">
+      <button type="submit" class="button">Finish Workout</button>
+    </form>
+    {{end}}
+
+  </body>
 </html>

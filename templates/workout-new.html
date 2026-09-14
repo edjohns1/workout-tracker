@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Workout</title>
+    <link href="/style.css" rel="stylesheet" />
+  </head>
+  <body>
+    {{template "navbar" .}}
+    <h1>New Workout</h1>
+    <form action="/workout-new" method="post">
+      <label>
+        Lift name
+        <input type="text" name="lift" required>
+      </label>
+
+      <label>
+        Weight
+        <input type="number" name="weight" min="0" step="5" required>
+      </label>
+
+      <label>
+        Reps
+        <input type="number" name="reps" min="1" step="1" required>
+      </label>
+
+      <label>
+        Sets
+        <input type="number" name="sets" min="1" step="1" required>
+      </label>
+      <button type="submit">Add to Workout</button>
+    </form>
+  </body>
+</html>

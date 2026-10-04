@@ -25,7 +25,7 @@ func main() {
 	templ = template.Must(template.ParseGlob("templates/*.html"))
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/workout-app", landingHandler)
+	mux.HandleFunc("/app", landingHandler)
 	mux.HandleFunc("/workout-new", newHandler)
 	mux.HandleFunc("/workout-active", activeHandler)
 	mux.HandleFunc("/workout-log", logHandler)

@@ -15,3 +15,8 @@ clean_db:
     sqlite3 workouts.db "delete from workouts;"
     sqlite3 workouts.db "delete from workout_exercises;"
     sqlite3 workouts.db "delete from workout_sets;"
+
+cat_db:
+    sqlite3 workouts.db "select * from workouts;"
+    sqlite3 workouts.db "select * from workout_exercises;"
+    sqlite3 workouts.db "select * from workout_sets;"

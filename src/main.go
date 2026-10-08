@@ -100,8 +100,33 @@ func activeHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Could not render page", http.StatusInternalServerError)
 			return
 		}
+
+		tx, err := db.BeginTx(r.Context(), nil)
+		if err != nil {
+			http.Error(w, "Could not submit workout", http.StatusInternalServerError)
+			return
+		}
+
+		workout_insert_result, err := tx.ExecContext(r.Context(), "INSERT INTO workouts DEFAULT VALUES")
+		if err != nil {
+			http.Error(w, "Could not submit workout", http.StatusInternalServerError)
+			return
+		}
+		workout_id, _ := workout_insert_result.LastInsertId()
+
 		var finishedExercises []Exercise
 		for i, exercise := range Exercises {
+
+			exercise_insert_result, err := tx.ExecContext(r.Context(),
+				`INSERT INTO workout_exercises
+    		     (workout_id, lift_name, position) VALUES (?, ?, ?)`,
+				workout_id, exercise.Lift, i+1)
+			if err != nil {
+				http.Error(w, "Could not render page", http.StatusBadRequest)
+					return
+			}
+			exercise_id, _ := exercise_insert_result.LastInsertId()
+
 			var finishedSets []Set
 			for j := range exercise.Sets {
 				weightText := fmt.Sprintf("weight_%d_%d", i, j)
@@ -128,6 +153,21 @@ func activeHandler(w http.ResponseWriter, r *http.Request) {
 					Completed: completed,
 				}
 				finishedSets = append(finishedSets, s)
+
+				completedInt := 0
+				if completed {
+					completedInt = 1
+				}
+
+				_, err = tx.ExecContext(r.Context(),
+					`INSERT INTO workout_sets
+             		 (workout_exercise_id, set_number, weight, reps, completed) VALUES (?, ?, ?, ?, ?)`,
+					exercise_id, j+1, s.Weight, s.Reps, completedInt)
+
+				if err != nil {
+					http.Error(w, "Could not render page", http.StatusBadRequest)
+					return
+				}
 			}
 			e := Exercise{
 				Lift: exercise.Lift,
@@ -135,23 +175,7 @@ func activeHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			finishedExercises = append(finishedExercises, e)
 		}
-		// submit to DB
-
-		tx, err := db.BeginTx(r.Context(), nil)
-		if err != nil {
-			http.Error(w, "Could not submit workout", http.StatusInternalServerError)
-		}
-		defer tx.Rollback()
-
-		result, err := tx.ExecContext(r.Context(), "INSERT INTO workouts DEFAULT VALUES")
-		if err != nil {
-			http.Error(w, "Could not submit workout", http.StatusInternalServerError)
-		}
-
-		new_workout_id, err := result.LastInsertId()
-		fmt.Println("new workout id:", new_workout_id)
-
-		fmt.Println(finishedExercises)
+		
 		tx.Commit()
 
 		Exercises = nil

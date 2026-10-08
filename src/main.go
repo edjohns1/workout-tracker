@@ -4,9 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 	"html/template"
-	_ "modernc.org/sqlite"
 	"net/http"
 	"strconv"
+
+	_ "modernc.org/sqlite"
 )
 
 var templ *template.Template
@@ -23,11 +24,13 @@ type Exercise struct {
 }
 
 var Exercises []Exercise
+var db *sql.DB
 
 func main() {
+	var err error
 
 	// open db and test connection
-	db, err := sql.Open("sqlite", "./workouts.db")
+	db, err = sql.Open("sqlite", "./workouts.db")
 	if err != nil {
 		panic(err)
 	}
@@ -60,7 +63,7 @@ func landingHandler(w http.ResponseWriter, r *http.Request) {
 
 func newHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
-		err := templ.ExecuteTemplate(w, "workout-new.html", nil)
+		err := templ.ExecuteTemplate(w, "workout-new.html", Exercises)
 		if err != nil {
 			http.Error(w, "Could not render page", http.StatusInternalServerError)
 		}
@@ -133,7 +136,23 @@ func activeHandler(w http.ResponseWriter, r *http.Request) {
 			finishedExercises = append(finishedExercises, e)
 		}
 		// submit to DB
+
+		tx, err := db.BeginTx(r.Context(), nil)
+		if err != nil {
+			http.Error(w, "Could not submit workout", http.StatusInternalServerError)
+		}
+		defer tx.Rollback()
+
+		result, err := tx.ExecContext(r.Context(), "INSERT INTO workouts DEFAULT VALUES")
+		if err != nil {
+			http.Error(w, "Could not submit workout", http.StatusInternalServerError)
+		}
+
+		new_workout_id, err := result.LastInsertId()
+		fmt.Println("new workout id:", new_workout_id)
+
 		fmt.Println(finishedExercises)
+		tx.Commit()
 
 		Exercises = nil
 		http.Redirect(w, r, "/workout-log", http.StatusSeeOther)

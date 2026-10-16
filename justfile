@@ -1,4 +1,4 @@
-default:
+build:
 	go build -C ./src -o ../bin/out
 
 run:

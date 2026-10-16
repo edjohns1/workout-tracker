@@ -9,5 +9,16 @@
 <body>
   {{template "navbar" .}}
   <h1>Workout Log</h1>
+  <section class="workout-cards">
+    {{range .}}
+    <article class="workout-card">
+      {{.Finished_at}}
+      <hr/>
+      {{range .Sets}}
+      <p>{{.Lift_name}} x {{.Weight}} x {{.Reps}}</p>
+      {{end}}
+    </article>
+    {{end}}
+  </section>
 </body>
 </html>

@@ -9,29 +9,32 @@
   <body>
     {{template "navbar" .}}
     <h1>New Workout</h1>
-    <form action="/workout-new" method="post">
-      <label>
-        Lift name
-        <input type="text" name="lift" required>
-      </label>
+    <article class="new-workout-card">
+      <form action="/workout-new" method="post">
+        <label>
+          Lift name
+          <input type="text" name="lift" required>
+        </label>
 
-      <label>
-        Weight
-        <input type="number" name="weight" min="0" step="5" required>
-      </label>
+        <label>
+          Weight
+          <input type="number" name="weight" min="0" step="5" required>
+        </label>
 
-      <label>
-        Reps
-        <input type="number" name="reps" min="1" step="1" required>
-      </label>
+        <label>
+          Reps
+          <input type="number" name="reps" min="1" step="1" required>
+        </label>
 
-      <label>
-        Sets
-        <input type="number" name="sets" min="1" step="1" required>
-      </label>
-      <button type="submit">Add to Workout</button>
-    </form>
+        <label>
+          Sets
+          <input type="number" name="sets" min="1" step="1" required>
+        </label>
+        <button type="submit">Add to Workout</button>
+      </form>
+    </article>
     {{if .}}
+    <hr/>
     <a href="/workout-active" class="button">Begin Workout -></a>
     {{end}}
   </body>

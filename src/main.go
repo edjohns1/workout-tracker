@@ -23,6 +23,27 @@ type Exercise struct {
 	Sets []Set
 }
 
+type WorkoutQueryResult struct {
+	Finished_at string
+	Workout_id  int
+	Lift_id     int
+	Lift_name   string
+	Set_id      int
+	Weight      int
+	Reps        int
+}
+
+type WorkoutCard struct {
+	ID          int
+	Finished_at string
+	Sets        []WorkoutQueryResult
+}
+
+type WorkoutResult struct {
+	Finished_at string
+	Exercise    []Exercise
+}
+
 var Exercises []Exercise
 var db *sql.DB
 
@@ -42,10 +63,10 @@ func main() {
 	templ = template.Must(template.ParseGlob("templates/*.html"))
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/app", landingHandler)
+	mux.HandleFunc("GET /app", landingHandler)
 	mux.HandleFunc("/workout-new", newHandler)
 	mux.HandleFunc("/workout-active", activeHandler)
-	mux.HandleFunc("/workout-log", logHandler)
+	mux.HandleFunc("GET /workout-log", logHandler)
 
 	mux.HandleFunc("/style.css", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "templates/style.css")
@@ -123,7 +144,7 @@ func activeHandler(w http.ResponseWriter, r *http.Request) {
 				workout_id, exercise.Lift, i+1)
 			if err != nil {
 				http.Error(w, "Could not render page", http.StatusBadRequest)
-					return
+				return
 			}
 			exercise_id, _ := exercise_insert_result.LastInsertId()
 
@@ -175,7 +196,7 @@ func activeHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			finishedExercises = append(finishedExercises, e)
 		}
-		
+
 		tx.Commit()
 
 		Exercises = nil
@@ -184,7 +205,45 @@ func activeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func logHandler(w http.ResponseWriter, r *http.Request) {
-	err := templ.ExecuteTemplate(w, "workout-log.html", nil)
+	var err error
+	statement := `
+WITH recent AS
+(SELECT * FROM workouts ORDER BY finished_at DESC LIMIT 3)
+SELECT recent.finished_at, recent.id, workout_exercises.id, workout_exercises.lift_name, workout_sets.id, workout_sets.weight, workout_sets.reps FROM recent
+JOIN workout_exercises on recent.id=workout_exercises.workout_id
+JOIN workout_sets on workout_exercises.id=workout_sets.workout_exercise_id
+ORDER BY recent.finished_at DESC, recent.id DESC, workout_exercises.id, workout_sets.id;`
+	rows, _ := db.Query(statement)
+	defer rows.Close()
+
+	var cards []WorkoutCard
+	i := -1
+	for rows.Next() {
+		var wr WorkoutQueryResult
+		err = rows.Scan(
+			&wr.Finished_at,
+			&wr.Workout_id,
+			&wr.Lift_id,
+			&wr.Lift_name,
+			&wr.Set_id,
+			&wr.Weight,
+			&wr.Reps,
+		)
+		if err != nil {
+			fmt.Println(err)
+		}
+		if len(cards) == 0 || cards[len(cards)-1].ID != wr.Workout_id {
+			cards = append(cards, WorkoutCard{
+				ID:          wr.Workout_id,
+				Finished_at: wr.Finished_at,
+			})
+			i += 1
+		}
+		cards[i].Sets = append(cards[i].Sets, wr)
+	}
+	// fmt.Printf("finished: %s, lift: %s\nweight: %d, reps:%d\n", wr.finished_at, wr.lift_name, wr.weight, wr.reps)
+	// fmt.Println("-------\n")
+	err = templ.ExecuteTemplate(w, "workout-log.html", cards)
 	if err != nil {
 		http.Error(w, "Could not render page", http.StatusInternalServerError)
 	}

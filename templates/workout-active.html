@@ -11,6 +11,7 @@
     <h1>Active Workout</h1>
 
     <form action="/workout-active" method="post">
+      <article class="active-workout-card">
       <ul>
         {{range $exerciseIndex, $exercise := .}}
         <li>
@@ -35,14 +36,15 @@
                 <input type="checkbox"
                        name="completed_{{$exerciseIndex}}_{{$setIndex}}">
               </label>
-          </li>
-          {{end}}
+            </li>
+            {{end}}
           </ul>
         </li>
         {{else}}
         <li>No exercises yet. <a href="/workout-new">Add some here</a>.</li>
         {{end}}
       </ul>
+      </article>
 
       {{if .}}
       <hr/>

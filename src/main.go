@@ -90,6 +90,13 @@ func newHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	} else if r.Method == "POST" {
 		lift := r.PostFormValue("lift")
+		switch lift {
+		case "Squat", "Deadlift", "Bench Press", "Curls":
+			// allowed lift, ok
+		default:
+			http.Error(w, "Invalid input", http.StatusBadRequest)
+			return
+		}
 		weight, _ := strconv.Atoi(r.PostFormValue("weight"))
 		reps, _ := strconv.Atoi(r.PostFormValue("reps"))
 		setCount, _ := strconv.Atoi(r.PostFormValue("sets"))
@@ -241,8 +248,6 @@ ORDER BY recent.finished_at DESC, recent.id DESC, workout_exercises.id, workout_
 		}
 		cards[i].Sets = append(cards[i].Sets, wr)
 	}
-	// fmt.Printf("finished: %s, lift: %s\nweight: %d, reps:%d\n", wr.finished_at, wr.lift_name, wr.weight, wr.reps)
-	// fmt.Println("-------\n")
 	err = templ.ExecuteTemplate(w, "workout-log.html", cards)
 	if err != nil {
 		http.Error(w, "Could not render page", http.StatusInternalServerError)

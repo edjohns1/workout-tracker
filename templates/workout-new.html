@@ -13,7 +13,13 @@
       <form action="/workout-new" method="post">
         <label>
           Lift name
-          <input type="text" name="lift" required>
+          <select name="lift" required>
+            <option value="">Choose a lift</option>
+            <option value="Squat">Squat</option>
+            <option value="Bench Press">Bench Press</option>
+            <option value="Deadlift">Deadlift</option>
+            <option value="Curls">Curls</option>
+          </select>
         </label>
 
         <label>
